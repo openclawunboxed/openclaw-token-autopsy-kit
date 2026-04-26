@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.openclaw.tail-audit</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/YOUR_USERNAME/token-autopsy-kit/tail_audit.py</string>
+        <string>--input</string>
+        <string>/Users/YOUR_USERNAME/openclaw/logs/runs.jsonl</string>
+        <string>--output</string>
+        <string>/Users/YOUR_USERNAME/token-autopsy-kit/running_ledger.csv</string>
+        <string>--price-map</string>
+        <string>/Users/YOUR_USERNAME/token-autopsy-kit/example_prices.csv</string>
+        <string>--poll-seconds</string>
+        <string>5</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/YOUR_USERNAME/token-autopsy-kit</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/Library/Logs/openclaw-tail-audit.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/Library/Logs/openclaw-tail-audit-error.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>

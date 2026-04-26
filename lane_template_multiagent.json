@@ -1,0 +1,20 @@
+{
+  "routing": {
+    "default": "gpt-4.1-mini",
+    "heartbeat": "gpt-4.1-mini",
+    "tool_heavy": "gpt-4.1-mini",
+    "high_judgment": "claude-sonnet-4-5"
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 4,
+    "sessionRetention": "24h"
+  },
+  "agents": {
+    "list": [
+      {"id": "ops", "default": true},
+      {"id": "sales"},
+      {"id": "research"}
+    ]
+  }
+}

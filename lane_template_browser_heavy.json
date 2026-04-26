@@ -1,0 +1,27 @@
+{
+  "routing": {
+    "default": "claude-sonnet-4-6",
+    "heartbeat": "gpt-4.1-mini",
+    "tool_heavy": "gpt-4.1-mini",
+    "tool_decision": "claude-sonnet-4-6",
+    "high_judgment": "claude-opus-4-7"
+  },
+  "agents": {
+    "defaults": {
+      "heartbeat": {
+        "every": "60m",
+        "target": "last"
+      }
+    }
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 2,
+    "sessionRetention": "24h"
+  },
+  "_notes": {
+    "use_when": "browser, pdf, screenshot, or scraping workflows produce most of the spend",
+    "key_idea": "the loop body runs on a budget model. only the decision step at the end of each loop hits the mid-tier lane.",
+    "trade_off": "loops with budget models can lose context across hops. only use this template if the agent has been tested for that workflow shape."
+  }
+}

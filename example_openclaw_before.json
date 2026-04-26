@@ -1,0 +1,22 @@
+{
+  "heartbeat": {
+    "every": "30m"
+  },
+  "models": {
+    "default": "claude-sonnet-4-5",
+    "cheap": "gpt-4.1-mini"
+  },
+  "routing": {
+    "default": "claude-sonnet-4-5",
+    "heartbeat": "claude-sonnet-4-5",
+    "tool_heavy": "claude-sonnet-4-5",
+    "high_judgment": "claude-opus-4-7"
+  },
+  "cron": {
+    "enabled": false,
+    "maxConcurrentRuns": 1
+  },
+  "browser": {
+    "enabled": true
+  }
+}

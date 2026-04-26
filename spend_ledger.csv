@@ -1,0 +1,5 @@
+agent,session,model,job_type,runs,input_tokens,output_tokens,total_tokens,cost_usd,recurring,source
+sales,followup,openrouter/opus,tool_heavy,2,43000,2900,45900,0.545,False,
+ops,main,claude-sonnet-4-5,heartbeat,2,16300,1190,17490,0.081,True,
+research,daily,gpt-4.1-mini,general,1,2600,500,3100,0.006,False,
+ops,main,gpt-4.1-mini,cron,1,1200,180,1380,0.002,True,

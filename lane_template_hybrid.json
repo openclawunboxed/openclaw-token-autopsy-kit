@@ -1,0 +1,21 @@
+{
+  "routing": {
+    "default": "local/qwen3-8b",
+    "heartbeat": "local/qwen3-8b",
+    "tool_heavy": "gpt-4.1-mini",
+    "high_judgment": "claude-sonnet-4-5"
+  },
+  "agents": {
+    "defaults": {
+      "heartbeat": {
+        "every": "45m",
+        "target": "last"
+      }
+    }
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 2,
+    "sessionRetention": "24h"
+  }
+}

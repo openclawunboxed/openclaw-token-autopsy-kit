@@ -1,0 +1,21 @@
+{
+  "routing": {
+    "default": "gpt-4.1-mini",
+    "heartbeat": "gpt-4.1-mini",
+    "tool_heavy": "gpt-4.1-mini",
+    "high_judgment": "claude-sonnet-4-5"
+  },
+  "agents": {
+    "defaults": {
+      "heartbeat": {
+        "every": "30m",
+        "target": "last"
+      }
+    }
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 2,
+    "sessionRetention": "24h"
+  }
+}

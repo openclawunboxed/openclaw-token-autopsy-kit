@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  tail-audit:
+    image: python:3.12-slim
+    container_name: openclaw-tail-audit
+    restart: unless-stopped
+    working_dir: /kit
+    volumes:
+      - ./:/kit:ro
+      - ./output:/kit/output
+      - /var/log/openclaw:/var/log/openclaw:ro
+    command: >
+      python tail_audit.py
+      --input /var/log/openclaw/runs.jsonl
+      --output /kit/output/running_ledger.csv
+      --price-map /kit/example_prices.csv
+      --poll-seconds 5
+
+  alerter:
+    image: python:3.12-slim
+    container_name: openclaw-alerter
+    restart: unless-stopped
+    working_dir: /kit
+    depends_on:
+      - tail-audit
+    volumes:
+      - ./:/kit:ro
+      - ./output:/kit/output
+    environment:
+      - WEBHOOK_URL=${WEBHOOK_URL}
+    entrypoint: ["/bin/sh", "-c"]
+    # poll every 15 minutes, alert if recent 60min spent >2x the baseline 6h rate
+    command: >
+      "while true; do
+         python alert_on_spike.py
+           --ledger /kit/output/running_ledger.csv
+           --recent-minutes 60
+           --baseline-hours 6
+           --threshold 2.0
+           --webhook \"$$WEBHOOK_URL\"
+           --quiet || true;
+         sleep 900;
+       done"
+
+# usage:
+#   1. set WEBHOOK_URL in a .env file alongside this docker-compose.yml
+#   2. docker compose up -d
+#   3. docker compose logs -f

@@ -1,0 +1,7 @@
+name,job_family,needs_precise_timing,uses_full_context
+daily_report,background_report,yes,no
+calendar_check,calendar_awareness,no,yes
+inbox_watch,inbox_awareness,no,yes
+followup_reminder,reminder,yes,no
+vendor_price_scrape,exact_time,yes,no
+refund_approval,destructive_action,no,yes

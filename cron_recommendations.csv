@@ -1,0 +1,7 @@
+name,job_family,needs_precise_timing,uses_full_context,recommendation,reason
+daily_report,background_report,yes,no,move_to_cron,precise or isolated work should not ride on full main-session context
+calendar_check,calendar_awareness,no,yes,keep_on_heartbeat,awareness-style work benefits from approximate checks with context
+inbox_watch,inbox_awareness,no,yes,keep_on_heartbeat,awareness-style work benefits from approximate checks with context
+followup_reminder,reminder,yes,no,move_to_cron,precise or isolated work should not ride on full main-session context
+vendor_price_scrape,exact_time,yes,no,move_to_cron,precise or isolated work should not ride on full main-session context
+refund_approval,destructive_action,no,yes,manual_review,the job shape is mixed or high-stakes

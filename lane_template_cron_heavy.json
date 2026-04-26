@@ -1,0 +1,27 @@
+{
+  "routing": {
+    "default": "claude-sonnet-4-6",
+    "heartbeat": "gpt-4.1-mini",
+    "tool_heavy": "gpt-4.1-mini",
+    "cron": "gpt-4.1-mini",
+    "high_judgment": "claude-opus-4-7"
+  },
+  "agents": {
+    "defaults": {
+      "heartbeat": {
+        "every": "60m",
+        "target": "last"
+      }
+    }
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 6,
+    "sessionRetention": "12h"
+  },
+  "_notes": {
+    "use_when": "the stack runs many scheduled batch jobs (daily reports, periodic scrapes, fixed-time reminders, recurring exports)",
+    "key_idea": "cron lane gets a budget model by default. only escalate to high_judgment when the cron job genuinely needs reasoning.",
+    "trade_off": "high maxConcurrentRuns is fine when each cron run is cheap. lower it to 2 if any single cron job is expensive."
+  }
+}

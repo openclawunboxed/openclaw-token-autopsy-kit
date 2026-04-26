@@ -1,0 +1,29 @@
+[Unit]
+Description=token autopsy tail mode
+After=network.target
+
+[Service]
+Type=simple
+User=openclaw
+Group=openclaw
+WorkingDirectory=/opt/token-autopsy-kit
+ExecStart=/usr/bin/python3 /opt/token-autopsy-kit/tail_audit.py \
+    --input /var/log/openclaw/runs.jsonl \
+    --output /opt/token-autopsy-kit/running_ledger.csv \
+    --price-map /opt/token-autopsy-kit/example_prices.csv \
+    --poll-seconds 5 \
+    --window-minutes 0
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/token-autopsy-kit /var/log/openclaw
+
+[Install]
+WantedBy=multi-user.target

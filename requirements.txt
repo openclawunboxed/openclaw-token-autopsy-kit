@@ -1,0 +1,2 @@
+# standard library only
+# requires python 3.10 or newer (uses modern type hint syntax)

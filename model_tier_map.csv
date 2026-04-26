@@ -1,0 +1,40 @@
+model_pattern,tier,notes
+claude-opus-4-7,premium,strongest reasoning lane in the 4.7 family
+claude-opus-4-6,premium,4.6 era opus
+claude-opus-3,premium,older opus
+claude-sonnet-4-6,mid,strong default for balanced workloads
+claude-sonnet-4-5,mid,prior balanced default
+claude-sonnet-3-7,mid,older sonnet
+claude-haiku-4-5,budget,fast cheap lane
+claude-haiku-3,budget,older budget lane
+gpt-5,premium,openai top tier
+gpt-5-mini,mid,openai mid tier
+gpt-5-nano,budget,openai cheapest
+gpt-4.1,premium,openai prior generation top
+gpt-4.1-mini,budget,common budget choice for routine work
+gpt-4o,mid,prior generation balanced
+gpt-4o-mini,budget,prior generation cheap
+o3,premium,openai reasoning
+o3-mini,mid,reasoning mid tier
+o4-mini,mid,reasoning mid tier
+gemini-2.5-pro,premium,google top
+gemini-2.5-flash,mid,google balanced
+gemini-2.5-flash-lite,budget,google cheap
+deepseek-r1,mid,reasoning model from deepseek
+deepseek-v3,mid,deepseek balanced
+qwen3-coder-next,mid,qwen coding model
+qwen3-72b,mid,qwen large
+qwen3-8b,budget,qwen small local-friendly
+qwen3-4b,budget,qwen small
+gemma-4,budget,google open
+mistral-large,premium,mistral top
+mistral-medium,mid,mistral mid
+mistral-small,budget,mistral cheap
+llama-3.3-70b,mid,meta open mid
+llama-3.3-8b,budget,meta open small
+openrouter/opus,premium,openrouter routing pattern for opus
+openrouter/sonnet,mid,openrouter routing pattern for sonnet
+local/qwen3-8b,budget,locally hosted qwen
+local/llama,budget,locally hosted llama
+local/mistral,budget,locally hosted mistral
+default,unknown,fallback when no pattern matches

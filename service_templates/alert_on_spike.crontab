@@ -1,0 +1,30 @@
+# token autopsy spend spike alerts
+# paste these lines into your crontab with `crontab -e`
+# adjust paths, threshold, and webhook url for your install
+
+# every 15 minutes: check if last 60 minutes spent >2x the prior 6 hour rate
+# alert via webhook if it did
+*/15 * * * * /usr/bin/python3 /opt/token-autopsy-kit/alert_on_spike.py \
+  --ledger /opt/token-autopsy-kit/running_ledger.csv \
+  --recent-minutes 60 \
+  --baseline-hours 6 \
+  --threshold 2.0 \
+  --webhook https://YOUR_SLACK_WEBHOOK_URL \
+  --quiet
+
+# every hour: write a markdown alert to the audit folder if a spike fires
+# (no webhook, useful for a daily review pattern)
+0 * * * * /usr/bin/python3 /opt/token-autopsy-kit/alert_on_spike.py \
+  --ledger /opt/token-autopsy-kit/running_ledger.csv \
+  --recent-minutes 120 \
+  --baseline-hours 12 \
+  --threshold 1.5 \
+  --output /opt/token-autopsy-kit/alert.md \
+  --quiet
+
+# every morning at 9am: re-run the full audit so the dashboard reflects the prior day
+0 9 * * * cd /opt/token-autopsy-kit && /usr/bin/python3 run_full_audit.py \
+  --input /var/log/openclaw/runs.jsonl \
+  --config /etc/openclaw/config.json \
+  --tasks /opt/token-autopsy-kit/example_task_map.csv \
+  --price-map /opt/token-autopsy-kit/example_prices.csv >> /var/log/token-autopsy.log 2>&1

@@ -1,0 +1,12 @@
+{
+  "heartbeat": {
+    "every": "30m"
+  },
+  "models": {
+    "default": "claude-sonnet-4-5",
+    "cheap": "gpt-4.1-mini"
+  },
+  "browser": {
+    "enabled": true
+  }
+}

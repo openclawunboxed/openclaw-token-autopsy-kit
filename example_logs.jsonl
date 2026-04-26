@@ -1,0 +1,6 @@
+{"agent":"ops","session":"main","model":"claude-sonnet-4-5","job_type":"heartbeat","input_tokens":8200,"output_tokens":600,"cost_usd":0.041}
+{"agent":"ops","session":"main","model":"claude-sonnet-4-5","job_type":"heartbeat","input_tokens":8100,"output_tokens":590,"cost_usd":0.040}
+{"agent":"ops","session":"main","model":"gpt-4.1-mini","job_type":"cron","input_tokens":1200,"output_tokens":180,"cost_usd":0.002}
+{"agent":"sales","session":"followup","model":"openrouter/opus","job_type":"tool_heavy","input_tokens":22000,"output_tokens":1500,"cost_usd":0.280}
+{"agent":"sales","session":"followup","model":"openrouter/opus","job_type":"tool_heavy","input_tokens":21000,"output_tokens":1400,"cost_usd":0.265}
+{"agent":"research","session":"daily","model":"gpt-4.1-mini","job_type":"general","input_tokens":2600,"output_tokens":500,"cost_usd":0.006}
