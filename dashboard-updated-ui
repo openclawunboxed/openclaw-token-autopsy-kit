@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Token Autopsy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── DESIGN TOKENS ────────────────────────────────────────── */
+    :root {
+      --bg:         #0a0a0a;
+      --bg-2:       #111111;
+      --bg-3:       #1a1a1a;
+      --bg-4:       #222222;
+      --bg-5:       #2a2a2a;
+      --border:     rgba(255,255,255,.08);
+      --border-md:  rgba(255,255,255,.13);
+      --border-lg:  rgba(255,255,255,.20);
+      --sep:        #1f1f1f;        /* solid separator — no rgba needed */
+      --text-1:     #ededed;
+      --text-2:     #a1a1a1;
+      --text-3:     #555555;
+      --text-inv:   #0a0a0a;       /* text on light surfaces (brand mark) */
+      --white:      #ffffff;
+      --mono:       'Geist Mono', 'Fira Code', ui-monospace, monospace;
+      --sans:       'Geist', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --r:          8px;
+      --r-lg:       12px;
+      --topbar-h:   48px;
+      --sidebar-w:  220px;
+    }
+
+    /* ── RESET ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 14px; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ── LAYOUT ───────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      grid-template-rows: var(--topbar-h) 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── TOPBAR ───────────────────────────────────────────────── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--sep);
+      z-index: 50;
+      flex-shrink: 0;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+
+    /* Brand */
+    .brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .8125rem; font-weight: 600;
+      color: var(--white); letter-spacing: -.015em;
+    }
+    .brand-mark {
+      width: 22px; height: 22px;
+      background: var(--white);
+      border-radius: 5px;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+    /* SVG uses currentColor so it flips with --text-inv */
+    .brand-mark svg { display: block; color: var(--text-inv); }
+
+    .sep-v { width: 1px; height: 16px; background: var(--sep); }
+
+    .breadcrumb {
+      display: flex; align-items: center; gap: 5px;
+      font-size: .75rem; color: var(--text-3);
+      letter-spacing: -.005em;
+    }
+    .breadcrumb strong { color: var(--text-2); font-weight: 500; }
+
+    /* Topbar right */
+    .topbar-right { display: flex; align-items: center; gap: 8px; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: .6875rem; font-weight: 500;
+      padding: 3px 9px; border-radius: 20px;
+      border: 1px solid var(--border-md);
+      color: var(--text-2);
+      white-space: nowrap;
+    }
+    .pill.live {
+      color: #22c55e;
+      border-color: rgba(34,197,94,.28);
+      background: rgba(34,197,94,.07);
+    }
+    .pill.live::before {
+      content: '';
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #22c55e;
+      animation: blink 2.2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .icon-btn {
+      width: 30px; height: 30px;
+      border: 1px solid var(--sep);
+      background: transparent;
+      border-radius: var(--r);
+      display: grid; place-items: center;
+      color: var(--text-3);
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .icon-btn:hover { border-color: var(--border-md); color: var(--text-1); background: var(--bg-3); }
+
+    /* ── SIDEBAR ──────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--bg);
+      border-right: 1px solid var(--sep);
+      padding: 14px 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .nav-section-label {
+      font-size: .6875rem; font-weight: 500;
+      letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-3);
+      padding: 0 8px;
+      margin: 14px 0 4px;
+    }
+    .nav-section-label:first-child { margin-top: 2px; }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: .8125rem; font-weight: 400;
+      color: var(--text-2);
+      border: 1px solid transparent;
+      transition: background .12s, color .12s, border-color .12s;
+      margin-bottom: 1px;
+    }
+    .nav-link:hover { background: var(--bg-3); color: var(--text-1); }
+    .nav-link.active {
+      background: var(--bg-3);
+      color: var(--white);
+      border-color: var(--border-md);
+    }
+    .nav-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: .55; transition: opacity .12s; }
+    .nav-link.active .nav-icon,
+    .nav-link:hover  .nav-icon { opacity: 1; }
+    .nav-count {
+      margin-left: auto;
+      font-size: .6875rem; font-family: var(--mono);
+      color: var(--text-3);
+    }
+
+    /* ── MAIN SCROLL AREA ─────────────────────────────────────── */
+    .main {
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 30px 32px 72px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── PAGE HEADER ──────────────────────────────────────────── */
+    .page-hd {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 16px;
+    }
+    .page-hd h1 {
+      font-size: 1.0625rem; font-weight: 600;
+      letter-spacing: -.03em; color: var(--white); line-height: 1.3;
+    }
+    .page-hd p { font-size: .75rem; color: var(--text-2); margin-top: 3px; }
+    .meta-chip {
+      font-size: .6875rem; font-family: var(--mono);
+      color: var(--text-3);
+      border: 1px solid var(--sep);
+      border-radius: var(--r);
+      padding: 5px 10px;
+      background: var(--bg-2);
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── SECTION LABEL ────────────────────────────────────────── */
+    .section-label {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .6875rem; font-weight: 500;
+      letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 12px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--sep);
+    }
+
+    /* ── KPI GRID ─────────────────────────────────────────────── */
+    /* Solid separator lines instead of rgba gap */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border: 1px solid var(--sep);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .kpi-cell {
+      background: var(--bg-2);
+      padding: 20px 22px;
+      display: flex; flex-direction: column; gap: 8px;
+      border-right: 1px solid var(--sep);
+      transition: background .15s;
+    }
+    .kpi-cell:last-child { border-right: none; }
+    .kpi-cell:hover { background: var(--bg-3); }
+    .kpi-label {
+      font-size: .6875rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--text-3);
+    }
+    .kpi-val {
+      font-size: 1.625rem; font-weight: 600;
+      letter-spacing: -.045em; color: var(--white);
+      line-height: 1; font-family: var(--mono);
+    }
+    .kpi-sub { font-size: .6875rem; color: var(--text-3); }
+
+    /* ── CARD ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-2);
+      border: 1px solid var(--sep);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--sep);
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-size: .8125rem; font-weight: 500;
+      color: var(--text-1); letter-spacing: -.01em;
+    }
+    .card-body { padding: 18px; }
+
+    /* ── GRID HELPERS ─────────────────────────────────────────── */
+    .col-2   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .col-2-3 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; }
+
+    /* ── BAR CHART ────────────────────────────────────────────── */
+    .bar-list { display: flex; flex-direction: column; gap: 14px; }
+    .bar-item  { display: flex; flex-direction: column; gap: 5px; }
+    .bar-meta  { display: flex; justify-content: space-between; align-items: baseline; }
+    .bar-name  { font-size: .75rem; color: var(--text-2); font-weight: 500; }
+    .bar-amt   { font-size: .75rem; font-family: var(--mono); color: var(--text-1); font-weight: 500; }
+    .bar-track {
+      width: 100%; height: 2px;
+      background: var(--bg-5);
+      border-radius: 99px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 99px;
+      background: var(--white);
+      width: 0%;
+      transition: width 1.1s cubic-bezier(.16,1,.3,1);
+    }
+    .bar-fill.mid { background: var(--text-2); }
+    .bar-fill.dim { background: var(--text-3); }
+
+    /* ── DONUT ────────────────────────────────────────────────── */
+    .donut-wrap { display: flex; align-items: center; gap: 22px; }
+    .donut-svg  { flex-shrink: 0; display: block; }
+    .legend     { display: flex; flex-direction: column; gap: 9px; flex: 1; min-width: 0; }
+    .legend-row {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 8px;
+    }
+    .legend-left  { display: flex; align-items: center; gap: 7px; min-width: 0; }
+    .legend-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .legend-name  { font-size: .75rem; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .legend-pct   { font-size: .6875rem; font-family: var(--mono); color: var(--text-3); flex-shrink: 0; }
+
+    /* ── TABLE ────────────────────────────────────────────────── */
+    .tbl-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 9px 16px;
+      font-size: .6875rem; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-3);
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--sep);
+      text-align: left;
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--sep);
+      transition: background .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg-3); }
+    tbody td { padding: 11px 16px; font-size: .8125rem; color: var(--text-1); }
+    .td-mono { font-family: var(--mono); font-size: .75rem; color: var(--text-2); }
+
+    /* Agent */
+    .agent-cell { display: flex; align-items: center; gap: 8px; }
+    .av {
+      width: 22px; height: 22px; border-radius: 5px;
+      border: 1px solid var(--border-md);
+      display: grid; place-items: center;
+      font-size: .5625rem; font-weight: 700; letter-spacing: .02em;
+      color: var(--text-2); background: var(--bg-4);
+      flex-shrink: 0; font-family: var(--mono);
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-flex; align-items: center;
+      font-size: .6875rem; font-weight: 500;
+      padding: 2px 7px; border-radius: 5px;
+      border: 1px solid var(--sep);
+      color: var(--text-2); background: var(--bg-3);
+      letter-spacing: .01em; white-space: nowrap;
+    }
+    .tag.em { color: var(--text-1); border-color: var(--border-md); background: var(--bg-4); }
+
+    /* Cost */
+    .cost { font-family: var(--mono); font-size: .75rem; font-weight: 500; }
+    .cost.hi  { color: var(--white); }
+    .cost.mid { color: var(--text-2); }
+    .cost.lo  { color: var(--text-3); }
+
+    /* ── AUDIT LIST ───────────────────────────────────────────── */
+    .audit-list { display: flex; flex-direction: column; }
+    .audit-item {
+      display: flex; gap: 13px; align-items: flex-start;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--sep);
+    }
+    .audit-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .audit-item:first-child { padding-top: 0; }
+    .audit-num {
+      width: 20px; height: 20px; border-radius: 5px;
+      border: 1px solid var(--border-md);
+      display: grid; place-items: center;
+      font-size: .625rem; font-family: var(--mono); font-weight: 600;
+      color: var(--text-3); flex-shrink: 0; margin-top: 1px;
+    }
+    .audit-title {
+      font-size: .8125rem; font-weight: 500;
+      color: var(--text-1); margin-bottom: 3px; letter-spacing: -.01em;
+    }
+    .audit-body { font-size: .75rem; color: var(--text-2); line-height: 1.65; }
+
+    /* ── RECO LIST ────────────────────────────────────────────── */
+    .reco-list { display: flex; flex-direction: column; gap: 7px; }
+    .reco-item {
+      display: flex; align-items: flex-start; gap: 11px;
+      padding: 12px 14px;
+      border: 1px solid var(--sep);
+      border-radius: var(--r);
+      background: var(--bg-3);
+      transition: border-color .15s, background .15s;
+    }
+    .reco-item:hover { border-color: var(--border-md); background: var(--bg-4); }
+    .reco-icon {
+      width: 26px; height: 26px; border-radius: 6px;
+      border: 1px solid var(--border-md);
+      display: grid; place-items: center;
+      flex-shrink: 0; font-size: 12px; background: var(--bg-2);
+    }
+    .reco-title {
+      font-size: .8125rem; font-weight: 500;
+      color: var(--text-1); margin-bottom: 2px; letter-spacing: -.01em;
+    }
+    .reco-body { font-size: .75rem; color: var(--text-2); line-height: 1.6; }
+
+    /* ── INLINE CODE ──────────────────────────────────────────── */
+    .ic {
+      font-family: var(--mono); font-size: .6875rem;
+      background: var(--bg-4); border: 1px solid var(--border-md);
+      border-radius: 4px; padding: 1px 5px;
+      color: var(--text-1);
+    }
+
+    /* ── ANOMALY SECTION ──────────────────────────────────────── */
+    .anomaly-table {
+      border: 1px solid var(--sep);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .at-head {
+      display: flex;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--sep);
+    }
+    .at-row {
+      display: flex;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--sep);
+      transition: background .1s;
+    }
+    .at-row:last-child { border-bottom: none; }
+    .at-row:hover { background: var(--bg-3); }
+    .at-cell {
+      padding: 11px 16px;
+      border-right: 1px solid var(--sep);
+      font-size: .75rem;
+      flex-shrink: 0;
+    }
+    .at-cell:last-child { border-right: none; }
+    .at-cell.c-name { min-width: 120px; }
+    .at-cell.c-data { flex: 1; display: flex; align-items: center; gap: 28px; }
+    .at-cell.c-badge { min-width: 108px; display: flex; align-items: center; }
+    .at-head-cell {
+      padding: 8px 16px;
+      border-right: 1px solid var(--sep);
+      font-size: .6875rem; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--text-3); flex-shrink: 0;
+    }
+    .at-head-cell:last-child { border-right: none; }
+    .at-head-cell.c-name { min-width: 120px; }
+    .at-head-cell.c-data { flex: 1; }
+    .at-head-cell.c-badge { min-width: 108px; }
+
+    .kv { display: flex; flex-direction: column; gap: 1px; }
+    .kv-k { font-size: .625rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; font-weight: 500; }
+    .kv-v { font-family: var(--mono); font-size: .75rem; color: var(--text-1); font-weight: 500; }
+
+    .delta {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-family: var(--mono); font-size: .75rem; font-weight: 600;
+      padding: 3px 8px; border-radius: 5px;
+    }
+    .delta.up   { color: #f87171; background: rgba(248,113,113,.09); border: 1px solid rgba(248,113,113,.18); }
+    .delta.down { color: #4ade80; background: rgba(74,222,128,.07);  border: 1px solid rgba(74,222,128,.15); }
+
+    /* ── SCROLLBAR ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-5); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+    /* ── RESPONSIVE ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: var(--topbar-h) auto 1fr;
+        height: auto;
+        overflow: visible;
+      }
+      .sidebar {
+        flex-direction: row; flex-wrap: wrap; gap: 4px;
+        border-right: none; border-bottom: 1px solid var(--sep);
+        padding: 8px 10px; overflow-y: visible; overflow-x: auto;
+      }
+      .nav-section-label { display: none; }
+      .nav-link { margin-bottom: 0; }
+      .main { overflow: visible; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .kpi-cell:nth-child(2) { border-right: none; }
+      .kpi-cell:nth-child(3),
+      .kpi-cell:nth-child(4) { border-top: 1px solid var(--sep); }
+      .col-2, .col-2-3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .main { padding: 20px 14px 56px; gap: 20px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .kpi-val { font-size: 1.25rem; }
+      .page-hd { flex-direction: column; gap: 8px; }
+      .at-cell.c-data { gap: 16px; }
+    }
+
+    /* ── FADE-IN ANIMATIONS ───────────────────────────────────── */
+    .fade { opacity: 0; transform: translateY(7px); animation: fadeUp .42s ease forwards; }
+    .d0 { animation-delay: 0s; }
+    .d1 { animation-delay: .07s; }
+    .d2 { animation-delay: .14s; }
+    .d3 { animation-delay: .21s; }
+    .d4 { animation-delay: .28s; }
+    .d5 { animation-delay: .35s; }
+    @keyframes fadeUp { to { opacity: 1; transform: none; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── TOPBAR ─────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="#" class="brand">
+        <div class="brand-mark">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2 9.5L6 2.5L10 9.5" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        Token Autopsy
+      </a>
+      <div class="sep-v" aria-hidden="true"></div>
+      <div class="breadcrumb">Reports&thinsp;/&thinsp;<strong>Run #2841</strong></div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill live">Live</span>
+      <span class="pill">Jul 14, 2025</span>
+      <button class="icon-btn" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">
+        <!-- sun icon (dark mode default — click to go light) -->
+        <svg id="themeIcon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
+                   M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <button class="icon-btn" title="Export report" aria-label="Export report">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── SIDEBAR ────────────────────────────────────────────── -->
+  <nav class="sidebar" aria-label="Dashboard navigation">
+    <div class="nav-section-label">Overview</div>
+
+    <a href="#overview" class="nav-link active" data-section="overview">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <rect x="1" y="1" width="5" height="5" rx="1"/>
+        <rect x="8" y="1" width="5" height="5" rx="1"/>
+        <rect x="1" y="8" width="5" height="5" rx="1"/>
+        <rect x="8" y="8" width="5" height="5" rx="1"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <a href="#costs" class="nav-link" data-section="costs">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M7 1v12M4.5 4C4.5 2.9 5.6 2 7 2s2.5.9 2.5 2S8.4 6 7 6 4.5 7 4.5 8s1.1 2 2.5 2 2.5-.9 2.5-2"/>
+      </svg>
+      Cost Breakdown
+      <span class="nav-count">4</span>
+    </a>
+
+    <a href="#rows" class="nav-link" data-section="rows">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <rect x="1" y="1" width="12" height="12" rx="1.5"/>
+        <path d="M1 5h12M1 9h12M5 5v7M9 1v12"/>
+      </svg>
+      Rows Analyzed
+      <span class="nav-count">4</span>
+    </a>
+
+    <div class="nav-section-label">Insights</div>
+
+    <a href="#heartbeat" class="nav-link" data-section="heartbeat">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <polyline points="1,7 4,7 5,3 7,11 9,5 10,7 13,7"/>
+      </svg>
+      Heartbeat Audit
+    </a>
+
+    <a href="#anomalies" class="nav-link" data-section="anomalies">
+      <svg class="nav-icon" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M7 1.5L12.5 12H1.5L7 1.5z"/>
+        <path d="M7 5.5v3M7 10v.5"/>
+      </svg>
+      Anomalies
+      <span class="nav-count">4</span>
+    </a>
+  </nav>
+
+  <!-- ── MAIN ───────────────────────────────────────────────── -->
+  <main class="main" id="main-scroll">
+
+    <!-- Page header -->
+    <div class="page-hd fade d0" id="overview">
+      <div>
+        <h1>Run Overview</h1>
+        <p>Token usage &amp; cost analysis &middot; 4 agents &middot; 3 models</p>
+      </div>
+      <div class="meta-chip">run #2841 &middot; 09:41 UTC</div>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="fade d1">
+      <div class="kpi-grid" role="list" aria-label="Key metrics">
+        <div class="kpi-cell" role="listitem">
+          <div class="kpi-label">Total Cost</div>
+          <div class="kpi-val">$0.63</div>
+          <div class="kpi-sub">This run</div>
+        </div>
+        <div class="kpi-cell" role="listitem">
+          <div class="kpi-label">Total Tokens</div>
+          <div class="kpi-val">67,870</div>
+          <div class="kpi-sub">~$9.27 / 1M avg</div>
+        </div>
+        <div class="kpi-cell" role="listitem">
+          <div class="kpi-label">Rows Analyzed</div>
+          <div class="kpi-val">4</div>
+          <div class="kpi-sub">1 flagged</div>
+        </div>
+        <div class="kpi-cell" role="listitem">
+          <div class="kpi-label">Models Active</div>
+          <div class="kpi-val">3</div>
+          <div class="kpi-sub">opus · sonnet · mini</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="col-2-3 fade d2" id="costs">
+
+      <!-- Bar chart -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Cost by job type</span>
+          <span class="tag">This run</span>
+        </div>
+        <div class="card-body">
+          <div class="bar-list">
+            <div class="bar-item">
+              <div class="bar-meta">
+                <span class="bar-name">tool_heavy</span>
+                <span class="bar-amt">$0.55</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" data-pct="87.3"></div></div>
+            </div>
+            <div class="bar-item">
+              <div class="bar-meta">
+                <span class="bar-name">heartbeat</span>
+                <span class="bar-amt">$0.08</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill mid" data-pct="12.7"></div></div>
+            </div>
+            <div class="bar-item">
+              <div class="bar-meta">
+                <span class="bar-name">general</span>
+                <span class="bar-amt">$0.01</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill dim" data-pct="1.6"></div></div>
+            </div>
+            <div class="bar-item">
+              <div class="bar-meta">
+                <span class="bar-name">cron</span>
+                <span class="bar-amt">$0.00</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill dim" data-pct="0.4"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donut chart -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Distribution</span>
+        </div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <!--
+              circumference = 2π × 15.915 ≈ 100
+              tool_heavy 87.3%  → dasharray 87.3 12.7  offset 25 (start at top)
+              heartbeat  12.3%  → dasharray 12.3 87.7  offset −62.3 (after tool_heavy)
+              Gaps kept as 0 so segments are flush.
+            -->
+            <svg class="donut-svg" width="110" height="110" viewBox="0 0 42 42"
+              role="img" aria-label="Cost distribution: tool_heavy 87%, heartbeat 13%">
+              <!-- track -->
+              <circle cx="21" cy="21" r="15.915"
+                fill="none" stroke="#1f1f1f" stroke-width="4.5"/>
+              <!-- tool_heavy -->
+              <circle id="d-arc1" cx="21" cy="21" r="15.915"
+                fill="none" stroke-width="4.5"
+                stroke="var(--donut-hi, #ededed)"
+                stroke-dasharray="0 100" stroke-dashoffset="25">
+                <animate attributeName="stroke-dasharray"
+                  from="0 100" to="87.3 12.7"
+                  dur="1s" fill="freeze"
+                  calcMode="spline" keySplines="0.16 1 0.3 1" keyTimes="0;1"/>
+              </circle>
+              <!-- heartbeat -->
+              <circle id="d-arc2" cx="21" cy="21" r="15.915"
+                fill="none" stroke-width="4.5"
+                stroke="var(--donut-lo, #3a3a3a)"
+                stroke-dasharray="0 100" stroke-dashoffset="-62.3">
+                <animate attributeName="stroke-dasharray"
+                  from="0 100" to="12.3 87.7"
+                  dur="1s" fill="freeze"
+                  calcMode="spline" keySplines="0.16 1 0.3 1" keyTimes="0;1"/>
+              </circle>
+              <!-- center label -->
+              <text x="21" y="19.5" text-anchor="middle"
+                fill="var(--donut-text, #ededed)"
+                font-size="5" font-weight="600"
+                font-family="Geist Mono,ui-monospace,monospace">$0.63</text>
+              <text x="21" y="25.5" text-anchor="middle"
+                fill="var(--donut-sub, #555)"
+                font-size="2.9"
+                font-family="Geist,ui-sans-serif,sans-serif"
+                letter-spacing=".4">TOTAL</text>
+            </svg>
+
+            <div class="legend">
+              <div class="legend-row">
+                <div class="legend-left">
+                  <div class="legend-dot" style="background:var(--donut-hi,#ededed)"></div>
+                  <span class="legend-name">tool_heavy</span>
+                </div>
+                <span class="legend-pct">87%</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-left">
+                  <div class="legend-dot" style="background:#666"></div>
+                  <span class="legend-name">heartbeat</span>
+                </div>
+                <span class="legend-pct">13%</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-left">
+                  <div class="legend-dot" style="background:#3a3a3a;border:1px solid #444"></div>
+                  <span class="legend-name">general</span>
+                </div>
+                <span class="legend-pct">&lt;2%</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-left">
+                  <div class="legend-dot" style="background:#222;border:1px solid #333"></div>
+                  <span class="legend-name">cron</span>
+                </div>
+                <span class="legend-pct">~0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Highest-cost rows table -->
+    <div class="card fade d3" id="rows">
+      <div class="card-header">
+        <span class="card-title">Highest-cost rows</span>
+        <span class="tag em">4 rows</span>
+      </div>
+      <div class="tbl-scroll">
+        <table aria-label="Highest cost rows">
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Session</th>
+              <th>Model</th>
+              <th>Job Type</th>
+              <th style="text-align:right">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="av" aria-hidden="true">SA</div>
+                  sales
+                </div>
+              </td>
+              <td class="td-mono">followup</td>
+              <td class="td-mono">openrouter/opus</td>
+              <td><span class="tag em">tool_heavy</span></td>
+              <td style="text-align:right"><span class="cost hi">$0.55</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="av" aria-hidden="true">OP</div>
+                  ops
+                </div>
+              </td>
+              <td class="td-mono">main</td>
+              <td class="td-mono">claude-sonnet-4-5</td>
+              <td><span class="tag">heartbeat</span></td>
+              <td style="text-align:right"><span class="cost mid">$0.08</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="av" aria-hidden="true">RE</div>
+                  research
+                </div>
+              </td>
+              <td class="td-mono">daily</td>
+              <td class="td-mono">gpt-4.1-mini</td>
+              <td><span class="tag">general</span></td>
+              <td style="text-align:right"><span class="cost lo">$0.01</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="agent-cell">
+                  <div class="av" aria-hidden="true">OP</div>
+                  ops
+                </div>
+              </td>
+              <td class="td-mono">main</td>
+              <td class="td-mono">gpt-4.1-mini</td>
+              <td><span class="tag">cron</span></td>
+              <td style="text-align:right"><span class="cost lo">$0.00</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Heartbeat audit + Recommendations -->
+    <div class="col-2 fade d4" id="heartbeat">
+
+      <!-- Audit -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Heartbeat audit</span>
+          <span class="tag em">1 flagged</span>
+        </div>
+        <div class="card-body">
+          <div class="audit-list">
+            <div class="audit-item">
+              <div class="audit-num" aria-hidden="true">01</div>
+              <div>
+                <div class="audit-title">Recurring interval detected</div>
+                <div class="audit-body">
+                  Heartbeat firing at <span class="ic">30m</span> intervals.
+                  Consistent cadence suggests scheduled work is being handled
+                  by heartbeat instead of a dedicated cron trigger.
+                </div>
+              </div>
+            </div>
+            <div class="audit-item">
+              <div class="audit-num" aria-hidden="true">02</div>
+              <div>
+                <div class="audit-title">Expensive heartbeat row</div>
+                <div class="audit-body">
+                  Agent <span class="ic">ops</span> &middot; session <span class="ic">main</span>
+                  &middot; model <span class="ic">claude-sonnet-4-5</span> &mdash;
+                  cost <span class="ic">$0.081</span>, tokens <span class="ic">17,490</span>.
+                  Mid-tier model on a pulse job.
+                </div>
+              </div>
+            </div>
+            <div class="audit-item">
+              <div class="audit-num" aria-hidden="true">03</div>
+              <div>
+                <div class="audit-title">Context bloat</div>
+                <div class="audit-body">
+                  17,490 tokens is ~5&times; the expected size for a heartbeat call.
+                  The main-session context is growing unbounded between runs.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Recommendations</span>
+        </div>
+        <div class="card-body">
+          <div class="reco-list">
+            <div class="reco-item">
+              <div class="reco-icon" aria-hidden="true">⏱</div>
+              <div>
+                <div class="reco-title">Move schedule work to cron</div>
+                <div class="reco-body">
+                  Exact-schedule tasks running via heartbeat add model cost per cycle.
+                  Migrate to a cron trigger to eliminate idle polling spend.
+                </div>
+              </div>
+            </div>
+            <div class="reco-item">
+              <div class="reco-icon" aria-hidden="true">📌</div>
+              <div>
+                <div class="reco-title">Pin a budget-tier model</div>
+                <div class="reco-body">
+                  Heartbeat loops rarely need <span class="ic">claude-sonnet</span>.
+                  Pinning <span class="ic">gpt-4.1-mini</span> saves ~90% per call
+                  with no quality loss for pulse checks.
+                </div>
+              </div>
+            </div>
+            <div class="reco-item">
+              <div class="reco-icon" aria-hidden="true">✂️</div>
+              <div>
+                <div class="reco-title">Trim main-session context</div>
+                <div class="reco-body">
+                  Reset or summarize context between cycles.
+                  17,490 tokens is well above the expected range for this job type.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anomaly report -->
+    <div class="fade d5" id="anomalies">
+      <div class="section-label">Anomaly Report</div>
+      <div class="anomaly-table" role="table" aria-label="Anomaly report">
+        <div class="at-head" role="row">
+          <div class="at-head-cell c-name" role="columnheader">Job Type</div>
+          <div class="at-head-cell c-data" role="columnheader">Before &middot; After &middot; Delta</div>
+          <div class="at-head-cell c-badge" role="columnheader">Change</div>
+        </div>
+
+        <div class="at-row" role="row">
+          <div class="at-cell c-name" role="cell"><span class="tag em">cron</span></div>
+          <div class="at-cell c-data" role="cell">
+            <div class="kv"><div class="kv-k">Before</div><div class="kv-v">$8.00</div></div>
+            <div class="kv"><div class="kv-k">After</div><div class="kv-v">$9.20</div></div>
+            <div class="kv"><div class="kv-k">Delta</div><div class="kv-v">+$1.20</div></div>
+          </div>
+          <div class="at-cell c-badge" role="cell"><span class="delta up">&#8593; +$1.20</span></div>
+        </div>
+
+        <div class="at-row" role="row">
+          <div class="at-cell c-name" role="cell"><span class="tag">general</span></div>
+          <div class="at-cell c-data" role="cell">
+            <div class="kv"><div class="kv-k">Before</div><div class="kv-v">$12.40</div></div>
+            <div class="kv"><div class="kv-k">After</div><div class="kv-v">$9.80</div></div>
+            <div class="kv"><div class="kv-k">Delta</div><div class="kv-v">&#8722;$2.60</div></div>
+          </div>
+          <div class="at-cell c-badge" role="cell"><span class="delta down">&#8595; &#8722;$2.60</span></div>
+        </div>
+
+        <div class="at-row" role="row">
+          <div class="at-cell c-name" role="cell"><span class="tag">heartbeat</span></div>
+          <div class="at-cell c-data" role="cell">
+            <div class="kv"><div class="kv-k">Before</div><div class="kv-v">$42.00</div></div>
+            <div class="kv"><div class="kv-k">After</div><div class="kv-v">$14.50</div></div>
+            <div class="kv"><div class="kv-k">Delta</div><div class="kv-v">&#8722;$27.50</div></div>
+          </div>
+          <div class="at-cell c-badge" role="cell"><span class="delta down">&#8595; &#8722;$27.50</span></div>
+        </div>
+
+        <div class="at-row" role="row">
+          <div class="at-cell c-name" role="cell"><span class="tag">tool_heavy</span></div>
+          <div class="at-cell c-data" role="cell">
+            <div class="kv"><div class="kv-k">Before</div><div class="kv-v">$31.50</div></div>
+            <div class="kv"><div class="kv-k">After</div><div class="kv-v">$19.10</div></div>
+            <div class="kv"><div class="kv-k">Delta</div><div class="kv-v">&#8722;$12.40</div></div>
+          </div>
+          <div class="at-cell c-badge" role="cell"><span class="delta down">&#8595; &#8722;$12.40</span></div>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── THEME ──────────────────────────────────────────────────── */
+  const root     = document.documentElement;
+  const themeBtn = document.getElementById('themeBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  let isLight = false;
+
+  const THEMES = {
+    dark: {
+      '--bg':         '#0a0a0a',
+      '--bg-2':       '#111111',
+      '--bg-3':       '#1a1a1a',
+      '--bg-4':       '#222222',
+      '--bg-5':       '#2a2a2a',
+      '--sep':        '#1f1f1f',
+      '--border':     'rgba(255,255,255,.08)',
+      '--border-md':  'rgba(255,255,255,.13)',
+      '--border-lg':  'rgba(255,255,255,.20)',
+      '--text-1':     '#ededed',
+      '--text-2':     '#a1a1a1',
+      '--text-3':     '#555555',
+      '--text-inv':   '#0a0a0a',
+      '--white':      '#ffffff',
+      '--donut-hi':   '#ededed',
+      '--donut-lo':   '#3a3a3a',
+      '--donut-text': '#ededed',
+      '--donut-sub':  '#555555',
+    },
+    light: {
+      '--bg':         '#fafafa',
+      '--bg-2':       '#ffffff',
+      '--bg-3':       '#f4f4f5',
+      '--bg-4':       '#e4e4e7',
+      '--bg-5':       '#d4d4d8',
+      '--sep':        '#e4e4e7',
+      '--border':     'rgba(0,0,0,.07)',
+      '--border-md':  'rgba(0,0,0,.12)',
+      '--border-lg':  'rgba(0,0,0,.18)',
+      '--text-1':     '#18181b',
+      '--text-2':     '#52525b',
+      '--text-3':     '#a1a1aa',
+      '--text-inv':   '#fafafa',
+      '--white':      '#18181b',
+      '--donut-hi':   '#18181b',
+      '--donut-lo':   '#d4d4d8',
+      '--donut-text': '#18181b',
+      '--donut-sub':  '#a1a1aa',
+    }
+  };
+
+  function applyTheme(name) {
+    const vars = THEMES[name];
+    Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
+  }
+
+  const SUN_PATH = `
+    <circle cx="12" cy="12" r="5"/>
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
+             M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>`;
+  const MOON_PATH = `<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>`;
+
+  themeBtn.addEventListener('click', () => {
+    isLight = !isLight;
+    applyTheme(isLight ? 'light' : 'dark');
+    themeIcon.innerHTML = isLight ? MOON_PATH : SUN_PATH;
+    /* also flip the brand-mark background via --text-inv */
+  });
+
+  /* ── BAR ANIMATIONS ─────────────────────────────────────────── */
+  function animateBars() {
+    document.querySelectorAll('.bar-fill[data-pct]').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }
+  /* Delay slightly so the CSS transition fires */
+  requestAnimationFrame(() => setTimeout(animateBars, 120));
+
+  /* ── SCROLL SPY ─────────────────────────────────────────────── */
+  const navLinks = Array.from(document.querySelectorAll('.nav-link[data-section]'));
+  const sectionIds = navLinks.map(l => l.dataset.section);
+  const mainEl = document.getElementById('main-scroll');
+
+  function getActive() {
+    /* Walk sections from bottom to top — first one scrolled past wins */
+    const scrollTop = mainEl.scrollTop + 64; /* offset for topbar height */
+    let active = sectionIds[0];
+    for (const id of sectionIds) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if (el.offsetTop <= scrollTop) active = id;
+    }
+    return active;
+  }
+
+  function updateSpy() {
+    const active = getActive();
+    navLinks.forEach(l => {
+      l.classList.toggle('active', l.dataset.section === active);
+    });
+  }
+
+  mainEl.addEventListener('scroll', updateSpy, { passive: true });
+  updateSpy(); /* set initial state */
+
+  /* Override spy briefly on nav click for instant feedback */
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    });
+  });
+
+}());
+</script>
+</body>
+</html>
